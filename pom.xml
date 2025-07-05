@@ -9,7 +9,7 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.bezkoder</groupId>
-	<artifactId>spring-boot-login-example</artifactId>
+	<artifactId>spring-boot-impl-jwt-security</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>spring-boot-login-example</name>
 	<description>Spring Boot Login example with Spring Security, JWT and MySQL - Rest API</description>
