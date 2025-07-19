@@ -1,12 +1,12 @@
-package com.devesh.spring.jwtauth.repository;
+package com.devesh.spring.otpwithjwtauth.repository;
 
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import com.devesh.spring.jwtauth.models.ERole;
-import com.devesh.spring.jwtauth.models.Role;
+import com.devesh.spring.otpwithjwtauth.models.ERole;
+import com.devesh.spring.otpwithjwtauth.models.Role;
 
 @Repository
 public interface RoleRepository extends JpaRepository<Role, Long> {

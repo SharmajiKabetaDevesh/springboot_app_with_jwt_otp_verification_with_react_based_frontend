@@ -1,4 +1,4 @@
-package com.devesh.spring.jwtauth.payload.request;
+package com.devesh.spring.otpwithjwtauth.payload.request;
 
 import java.util.Set;
 

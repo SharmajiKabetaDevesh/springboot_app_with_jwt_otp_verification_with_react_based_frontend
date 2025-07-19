@@ -1,4 +1,4 @@
-package com.devesh.spring.jwtauth.security.jwt;
+package com.devesh.spring.otpwithjwtauth.security.jwt;
 
 import java.io.IOException;
 import java.util.HashMap;

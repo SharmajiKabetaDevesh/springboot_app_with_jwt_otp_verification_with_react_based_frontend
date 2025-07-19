@@ -1,4 +1,4 @@
-package com.devesh.spring.jwtauth.security.services;
+package com.devesh.spring.otpwithjwtauth.security.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -7,8 +7,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.devesh.spring.jwtauth.models.User;
-import com.devesh.spring.jwtauth.repository.UserRepository;
+import com.devesh.spring.otpwithjwtauth.models.User;
+import com.devesh.spring.otpwithjwtauth.repository.UserRepository;
 
 @Service
 public class UserDetailsServiceImpl implements UserDetailsService {
@@ -23,5 +23,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
     return UserDetailsImpl.build(user);
   }
+
+
 
 }

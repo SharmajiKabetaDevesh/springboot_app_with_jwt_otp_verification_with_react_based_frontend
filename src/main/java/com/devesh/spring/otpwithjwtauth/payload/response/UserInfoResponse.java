@@ -1,4 +1,4 @@
-package com.devesh.spring.jwtauth.payload.response;
+package com.devesh.spring.otpwithjwtauth.payload.response;
 
 import java.util.List;
 

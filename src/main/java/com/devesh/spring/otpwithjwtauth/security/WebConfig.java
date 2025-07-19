@@ -1,4 +1,4 @@
-package com.devesh.spring.jwtauth.security;
+package com.devesh.spring.otpwithjwtauth.security;
 
 
 import org.springframework.context.annotation.Bean;

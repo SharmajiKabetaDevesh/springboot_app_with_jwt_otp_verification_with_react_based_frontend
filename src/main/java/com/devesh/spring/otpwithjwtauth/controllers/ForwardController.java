@@ -1,4 +1,4 @@
-package com.devesh.spring.jwtauth.controllers;
+package com.devesh.spring.otpwithjwtauth.controllers;
 
 
 import org.springframework.stereotype.Controller;

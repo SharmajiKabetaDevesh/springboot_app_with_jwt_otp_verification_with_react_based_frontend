@@ -1,19 +1,14 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import React from 'react';
+import { useSelector } from 'react-redux';
 
-export default function Dashboard() {
-  const [content, setContent] = useState("");
-
-  useEffect(() => {
-    axios.get("http://localhost:8080/api/test/all", { withCredentials: true })
-      .then(res => setContent(res.data))
-      .catch(() => setContent("You are not authorized."));
-  }, []);
-
-  return (
-    <div>
-      <h2>Dashboard</h2>
-      <p>{content}</p>
-    </div>
-  );
+function Dashboard() {
+    const { user } = useSelector(state => state.auth);
+    return (
+        <div className="p-8">
+            <h1 className="text-3xl font-bold">Welcome to your Dashboard, {user?.username || 'User'}!</h1>
+            <p className="mt-4">You are successfully logged in.</p>
+        </div>
+    )
 }
+
+export default Dashboard;

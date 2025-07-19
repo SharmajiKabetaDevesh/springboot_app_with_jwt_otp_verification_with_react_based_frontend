@@ -1,12 +1,29 @@
-package com.devesh.spring.jwtauth.controllers;
+package com.devesh.spring.otpwithjwtauth.controllers;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.servlet.http.HttpServletRequest; // Import HttpServletRequest
+import com.devesh.spring.otpwithjwtauth.models.ERole;
+import com.devesh.spring.otpwithjwtauth.models.Role;
+import com.devesh.spring.otpwithjwtauth.models.User;
+import com.devesh.spring.otpwithjwtauth.payload.request.LoginRequest;
+import com.devesh.spring.otpwithjwtauth.payload.request.SignupRequest;
+import com.devesh.spring.otpwithjwtauth.payload.response.MessageResponse;
+import com.devesh.spring.otpwithjwtauth.payload.response.UserInfoResponse;
+import com.devesh.spring.otpwithjwtauth.repository.RoleRepository;
+import com.devesh.spring.otpwithjwtauth.repository.UserRepository;
+import com.devesh.spring.otpwithjwtauth.security.jwt.JwtUtils;
+import com.devesh.spring.otpwithjwtauth.security.services.EmailService;
+import com.devesh.spring.otpwithjwtauth.security.services.OtpService;
+import com.devesh.spring.otpwithjwtauth.security.services.RefreshTokenService;
+import com.devesh.spring.otpwithjwtauth.security.services.UserDetailsImpl;
+
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -21,19 +38,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
-
-import com.devesh.spring.jwtauth.models.ERole;
-import com.devesh.spring.jwtauth.models.Role;
-import com.devesh.spring.jwtauth.models.User;
-import com.devesh.spring.jwtauth.payload.request.LoginRequest;
-import com.devesh.spring.jwtauth.payload.request.SignupRequest;
-import com.devesh.spring.jwtauth.payload.response.UserInfoResponse;
-import com.devesh.spring.jwtauth.payload.response.MessageResponse;
-import com.devesh.spring.jwtauth.repository.RoleRepository;
-import com.devesh.spring.jwtauth.repository.UserRepository;
-import com.devesh.spring.jwtauth.security.jwt.JwtUtils;
-import com.devesh.spring.jwtauth.security.services.UserDetailsImpl;
-import com.devesh.spring.jwtauth.security.services.RefreshTokenService;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -51,26 +55,73 @@ public class AuthController {
   PasswordEncoder encoder;
 
   @Autowired
+  private EmailService emailService;
+
+  @Autowired
   JwtUtils jwtUtils;
 
   @Autowired
   RefreshTokenService refreshTokenService;
 
+  @Autowired
+  OtpService otpService;
+
+  /**
+   * Step 1: Authenticate user credentials and send OTP.
+   * This endpoint now validates username/password and sends an OTP to the user's email
+   * instead of returning JWTs directly.
+   */
   @PostMapping("/signin")
   public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
-
+    // Authenticate the user. This will throw an exception if credentials are bad.
     Authentication authentication = authenticationManager
             .authenticate(new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
 
+    // If authentication is successful, get user details
+    UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+    String email = userDetails.getEmail();
+
+    // Generate and send OTP
+    System.out.println(email);
+    String otp = otpService.generateOtp(loginRequest.getUsername());
+    emailService.sendOtpEmail(email, otp); // Assumes EmailService is configured to send emails
+
+    return ResponseEntity.ok(new MessageResponse("OTP has been sent to your email for verification."));
+  }
+
+  /**
+   * Step 2: Verify OTP and generate JWTs.
+   * This new endpoint verifies the submitted OTP. If correct, it generates and returns
+   * the JWT and Refresh Token cookies.
+   */
+  @PostMapping("/verify-otp")
+  public ResponseEntity<?> verifyOtpAndGenerateTokens(@Valid @RequestBody OtpVerificationRequest verificationRequest) {
+    String serverOtp = otpService.getOtp(verificationRequest.getUsername());
+
+    // Check if OTP is valid
+    if (serverOtp == null || !serverOtp.equals(verificationRequest.getOtp())) {
+      return ResponseEntity.badRequest().body(new MessageResponse("Error: Invalid OTP!"));
+    }
+
+    // OTP is correct, clear it from the cache
+    otpService.clearOtp(verificationRequest.getUsername());
+
+    // The user is authenticated via OTP, now generate tokens
+    // We fetch the user details again to ensure we have the latest data
+    User user = userRepository.findByUsername(verificationRequest.getUsername())
+            .orElseThrow(() -> new RuntimeException("Error: User not found after OTP verification."));
+    UserDetailsImpl userDetails = UserDetailsImpl.build(user);
+
+    // Set authentication in SecurityContext
+    Authentication authentication = new UsernamePasswordAuthenticationToken(
+            userDetails, null, userDetails.getAuthorities());
     SecurityContextHolder.getContext().setAuthentication(authentication);
 
-    UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-
+    // Generate JWT cookie
     ResponseCookie jwtCookie = jwtUtils.generateJwtCookie(userDetails);
 
+    // Manage Refresh Token
     refreshTokenService.deleteByUserId(userDetails.getId());
-
-
     String refreshToken = refreshTokenService.createRefreshToken(userDetails.getId()).getToken();
     ResponseCookie refreshTokenCookie = jwtUtils.generateRefreshTokenCookie(refreshToken);
 
@@ -78,6 +129,7 @@ public class AuthController {
             .map(GrantedAuthority::getAuthority)
             .collect(Collectors.toList());
 
+    // Return response with cookies and user info
     return ResponseEntity.ok()
             .header(HttpHeaders.SET_COOKIE, jwtCookie.toString())
             .header(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString())
@@ -85,6 +137,20 @@ public class AuthController {
                     userDetails.getUsername(),
                     userDetails.getEmail(),
                     roles));
+  }
+
+  // DTO for the OTP verification request body
+  static class OtpVerificationRequest {
+    @NotBlank
+    private String username;
+
+    @NotBlank
+    private String otp;
+
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
+    public String getOtp() { return otp; }
+    public void setOtp(String otp) { this.otp = otp; }
   }
 
   @PostMapping("/signup")
@@ -96,7 +162,6 @@ public class AuthController {
     if (userRepository.existsByEmail(signUpRequest.getEmail())) {
       return ResponseEntity.badRequest().body(new MessageResponse("Error: Email is already in use!"));
     }
-
 
     User user = new User(signUpRequest.getUsername(),
             signUpRequest.getEmail(),
@@ -111,24 +176,15 @@ public class AuthController {
       roles.add(userRole);
     } else {
       strRoles.forEach(role -> {
-        switch (role) {
-          case "admin":
-            Role adminRole = roleRepository.findByName(ERole.ROLE_ADMIN)
-                    .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-            roles.add(adminRole);
-
-            break;
-          case "mod":
-            Role modRole = roleRepository.findByName(ERole.ROLE_MODERATOR)
-                    .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-            roles.add(modRole);
-
-            break;
-          default:
-            Role userRole = roleRepository.findByName(ERole.ROLE_USER)
-                    .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-            roles.add(userRole);
-        }
+          if (role.equals("admin")) {
+              Role adminRole = roleRepository.findByName(ERole.ROLE_ADMIN)
+                      .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+              roles.add(adminRole);
+          } else {
+              Role userRole = roleRepository.findByName(ERole.ROLE_USER)
+                      .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+              roles.add(userRole);
+          }
       });
     }
 
@@ -139,21 +195,17 @@ public class AuthController {
   }
 
   @PostMapping("/signout")
-  public ResponseEntity<?> logoutUser(HttpServletRequest request) { // Add HttpServletRequest
-    // Get refresh token from cookie
+  public ResponseEntity<?> logoutUser(HttpServletRequest request) {
     String refreshTokenString = jwtUtils.getJwtRefreshFromCookies(request);
 
     if (refreshTokenString != null && !refreshTokenString.isEmpty()) {
       try {
-        // Attempt to delete the refresh token from the database
-        refreshTokenService.deleteByToken(refreshTokenString); // New method to delete by token
+        refreshTokenService.deleteByToken(refreshTokenString);
       } catch (Exception e) {
-        // Log the error but don't prevent logout, as clearing cookies is primary
         System.err.println("Error deleting refresh token on logout: " + e.getMessage());
       }
     }
 
-    // Clear client-side cookies regardless of server-side refresh token deletion status
     ResponseCookie jwtCookie = jwtUtils.getCleanJwtCookie();
     ResponseCookie refreshTokenCookie = jwtUtils.getCleanRefreshTokenCookie();
 
@@ -164,7 +216,7 @@ public class AuthController {
   }
 
   @PostMapping("/refreshtoken")
-  public ResponseEntity<?> refreshtoken(HttpServletRequest request) { // Use jakarta.servlet.http.HttpServletRequest
+  public ResponseEntity<?> refreshtoken(HttpServletRequest request) {
     String refreshTokenString = jwtUtils.getJwtRefreshFromCookies(request);
 
     if ((refreshTokenString != null) && (refreshTokenString.length() > 0)) {
@@ -174,12 +226,6 @@ public class AuthController {
                 String username = refreshToken.getUser().getUsername();
                 String newAccessToken = jwtUtils.generateTokenFromUsername(username);
                 ResponseCookie jwtCookie = jwtUtils.generateJwtCookie(newAccessToken);
-
-                // Optional: Refresh token rotation -
-                // If you want to issue a new refresh token every time,
-                // delete the old one and create a new one here.
-                // For now, we reuse the existing refresh token until its expiry.
-
                 return ResponseEntity.ok()
                         .header(HttpHeaders.SET_COOKIE, jwtCookie.toString())
                         .body(new MessageResponse("Token refreshed successfully!"));
@@ -204,7 +250,19 @@ public class AuthController {
             userDetails.getId(),
             userDetails.getUsername(),
             userDetails.getEmail(),
-            roles
-    ));
+            roles));
   }
+
+  @GetMapping("/checkUsername")
+  public ResponseEntity<?> checkUsernameAvailability(@RequestParam String username) {
+    try {
+      boolean exists = userRepository.existsByUsername(username);
+      return ResponseEntity.ok(Map.of("available", !exists));
+    } catch (Exception e) {
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+              .body(Map.of("error", "Server error while checking username"));
+    }
+  }
+
+
 }

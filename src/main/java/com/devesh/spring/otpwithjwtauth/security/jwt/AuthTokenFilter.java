@@ -1,4 +1,4 @@
-package com.devesh.spring.jwtauth.security.jwt;
+package com.devesh.spring.otpwithjwtauth.security.jwt;
 
 import java.io.IOException;
 
@@ -16,7 +16,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import com.devesh.spring.jwtauth.security.services.UserDetailsServiceImpl;
+import com.devesh.spring.otpwithjwtauth.security.services.UserDetailsServiceImpl;
 
 public class AuthTokenFilter extends OncePerRequestFilter {
   @Autowired

@@ -1,9 +1,9 @@
-package com.devesh.spring.jwtauth.security.services;
+package com.devesh.spring.otpwithjwtauth.security.services;
 
 
-import com.devesh.spring.jwtauth.models.RefreshToken;
-import com.devesh.spring.jwtauth.repository.RefreshTokenRepository;
-import com.devesh.spring.jwtauth.repository.UserRepository;
+import com.devesh.spring.otpwithjwtauth.models.RefreshToken;
+import com.devesh.spring.otpwithjwtauth.repository.RefreshTokenRepository;
+import com.devesh.spring.otpwithjwtauth.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;

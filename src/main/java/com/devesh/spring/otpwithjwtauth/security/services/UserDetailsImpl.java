@@ -1,4 +1,4 @@
-package com.devesh.spring.jwtauth.security.services;
+package com.devesh.spring.otpwithjwtauth.security.services;
 
 import java.util.Collection;
 import java.util.List;
@@ -9,7 +9,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import com.devesh.spring.jwtauth.models.User;
+import com.devesh.spring.otpwithjwtauth.models.User;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public class UserDetailsImpl implements UserDetails {

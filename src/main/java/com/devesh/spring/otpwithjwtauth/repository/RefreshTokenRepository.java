@@ -1,7 +1,7 @@
-package com.devesh.spring.jwtauth.repository;
+package com.devesh.spring.otpwithjwtauth.repository;
 
-import com.devesh.spring.jwtauth.models.RefreshToken;
-import com.devesh.spring.jwtauth.models.User;
+import com.devesh.spring.otpwithjwtauth.models.RefreshToken;
+import com.devesh.spring.otpwithjwtauth.models.User;
 import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;

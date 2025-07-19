@@ -1,4 +1,4 @@
-package com.devesh.spring.jwtauth.security.jwt;
+package com.devesh.spring.otpwithjwtauth.security.jwt;
 
 import java.security.Key;
 import java.util.Date;
@@ -13,7 +13,7 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.WebUtils;
 
-import com.devesh.spring.jwtauth.security.services.UserDetailsImpl;
+import com.devesh.spring.otpwithjwtauth.security.services.UserDetailsImpl;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders; // Added for base64 decoding
 import io.jsonwebtoken.security.Keys;

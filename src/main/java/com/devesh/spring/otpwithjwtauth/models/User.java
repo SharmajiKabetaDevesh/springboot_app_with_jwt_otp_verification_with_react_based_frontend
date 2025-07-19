@@ -1,4 +1,4 @@
-package com.devesh.spring.jwtauth.models;
+package com.devesh.spring.otpwithjwtauth.models;
 
 import java.util.HashSet;
 import java.util.Set;

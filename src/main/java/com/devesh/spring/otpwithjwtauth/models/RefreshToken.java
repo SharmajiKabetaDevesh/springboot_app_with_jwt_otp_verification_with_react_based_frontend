@@ -1,4 +1,4 @@
-package com.devesh.spring.jwtauth.models;
+package com.devesh.spring.otpwithjwtauth.models;
 
 import jakarta.persistence.*;
 
