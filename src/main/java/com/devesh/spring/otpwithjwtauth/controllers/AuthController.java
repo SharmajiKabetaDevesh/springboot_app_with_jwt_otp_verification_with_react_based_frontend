@@ -68,12 +68,9 @@ public class AuthController {
 
     ResponseCookie jwtCookie = jwtUtils.generateJwtCookie(userDetails);
 
-    // Before creating a new refresh token, delete any existing one for this user.
-    // This prevents the "Duplicate entry" error on subsequent logins for the same user.
-    // This is crucial for fixing the SQLIntegrityConstraintViolationException.
-    refreshTokenService.deleteByUserId(userDetails.getId()); // <--- IMPORTANT FIX
+    refreshTokenService.deleteByUserId(userDetails.getId());
 
-    // Now create a new refresh token
+
     String refreshToken = refreshTokenService.createRefreshToken(userDetails.getId()).getToken();
     ResponseCookie refreshTokenCookie = jwtUtils.generateRefreshTokenCookie(refreshToken);
 
@@ -100,7 +97,7 @@ public class AuthController {
       return ResponseEntity.badRequest().body(new MessageResponse("Error: Email is already in use!"));
     }
 
-    // Create new user's account
+
     User user = new User(signUpRequest.getUsername(),
             signUpRequest.getEmail(),
             encoder.encode(signUpRequest.getPassword()));
